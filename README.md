@@ -14,7 +14,8 @@ Whether you deploy the api on public endpoint (like AWS/heroku) or keep it local
 
 *This description is purposefully short in order to allow you to be creative*
 
-# Getting Started
+
+## Getting Started
 The v1 API supports endpoints for fetching and creating burgers
 
 ## Dependencies
@@ -33,7 +34,7 @@ Parameter options:
  * migrate - Perform mongo collection validation setup & fixture population
  * config  - Set configuration path
 
-##Pagination
+## Pagination
 Requests that return multiple items will be limited to 5 results by default. You can access other pages using the ?page paramater, you can also increase the amount of beers returned in each request by changing the ?per_page paramater.
 
 ```bash
