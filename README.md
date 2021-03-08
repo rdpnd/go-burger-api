@@ -82,7 +82,7 @@ curl --header "Content-Type: application/json" \
   http://localhost:8080/api/v1/burgers
 ```
 
-##Example response
+## Example response
 
 ```json
 {
