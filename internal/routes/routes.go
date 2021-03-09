@@ -2,6 +2,7 @@ package routes
 
 import (
 	"burger-api/internal/model"
+	"burger-api/internal/model/burger"
 	"encoding/json"
 	"github.com/gorilla/pat"
 	"net/http"
@@ -42,7 +43,7 @@ func makeJsonHandler(fn func(http.ResponseWriter, *http.Request) interface{}) ht
 func viewAllHandler(w http.ResponseWriter, r *http.Request) interface{} {
 	p := model.ExtractPage(r)
 	nameEq := r.URL.Query().Get("burger_name")
-	burgers, err := model.FindAll(p, nameEq)
+	burgers, err := burger.Repo.FindAll(p, nameEq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return nil
@@ -51,7 +52,7 @@ func viewAllHandler(w http.ResponseWriter, r *http.Request) interface{} {
 }
 
 func viewRandomHandler(w http.ResponseWriter, r *http.Request) interface{} {
-	burger, err := model.FindRandom()
+	burger, err := burger.Repo.FindRandom()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return nil
@@ -61,7 +62,7 @@ func viewRandomHandler(w http.ResponseWriter, r *http.Request) interface{} {
 
 func viewOneHandler(w http.ResponseWriter, r *http.Request) interface{} {
 	id := r.URL.Query().Get(":id")
-	burgers, err := model.FindOne(id)
+	burgers, err := burger.Repo.FindOne(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return nil
@@ -70,16 +71,16 @@ func viewOneHandler(w http.ResponseWriter, r *http.Request) interface{} {
 }
 
 func saveOneHandler(w http.ResponseWriter, r *http.Request) interface{} {
-	var reqBurger model.Burger
+	var reqBurger burger.Burger
 	err := json.NewDecoder(r.Body).Decode(&reqBurger)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil
 	}
-	insrBurger, err := model.InsertOne(&reqBurger)
+	insrtBurger, err := burger.Repo.Save(&reqBurger)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil
 	}
-	return insrBurger
+	return insrtBurger
 }

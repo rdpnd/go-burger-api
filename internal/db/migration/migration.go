@@ -3,7 +3,7 @@ package migration
 import (
 	"burger-api/internal/config"
 	"burger-api/internal/db"
-	"burger-api/internal/model"
+	"burger-api/internal/model/burger"
 	"context"
 	"encoding/json"
 	"go.mongodb.org/mongo-driver/bson"
@@ -44,7 +44,7 @@ func insertFixtures() {
 		config.Logger.Printf("No burger fixture data was found %v", err)
 		return
 	}
-	var data []model.Burger
+	var data []burger.Burger
 
 	err = json.Unmarshal(file, &data)
 	if err != nil {
@@ -52,8 +52,8 @@ func insertFixtures() {
 		return
 	}
 
-	for _, burger := range data {
-		_, err := model.InsertOne(&burger)
+	for _, b := range data {
+		_, err := burger.Repo.Save(&b)
 		if err != nil {
 			config.Logger.Printf("Error while inserting fixture data %v", err)
 		}

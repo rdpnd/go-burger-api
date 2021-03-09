@@ -1,7 +1,7 @@
-package model
+package burger
 
 import (
-	"burger-api/internal/db"
+	"burger-api/internal/model"
 	"context"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,30 +10,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const BurgerColName = "burgers"
+type MongoRepository struct {
+	collection *mongo.Collection
+}
 
 var ctxBG = context.Background()
 
-func burgerCol() *mongo.Collection {
-	return db.Client.Database("burger").Collection(BurgerColName)
+func NewMongoRepository(mdb *mongo.Database) MongoRepository {
+	return MongoRepository{collection: mdb.Collection(BurgerColName)}
 }
 
-type Burger struct {
-	ID           primitive.ObjectID `bson:"_id" json:"id,omitempty"`
-	Name         string             `json:"name"`
-	Ingredients  []string           `json:"ingredients"`
-	Notes        []string           `json:"notes"`
-	Source       string             `json:"source"`
-	Instructions []string           `json:"instructions"`
-	B64Image     string             `json:"encodedImage"`
-}
-
-func FindAll(page Page, nameEq string) ([]Burger, error) {
+func (r MongoRepository) FindAll(page model.Page, nameEq string) ([]Burger, error) {
 	filter := bson.M{}
 	if len(nameEq) != 0 {
-		filter = bson.M{ "name" : nameEq }
+		filter = bson.M{"name": nameEq}
 	}
-	cursor, err := burgerCol().Find(ctxBG, filter, &options.FindOptions{Limit: &page.PerPage, Skip: &page.Page})
+	cursor, err := r.collection.Find(ctxBG, filter, &options.FindOptions{Limit: &page.PerPage, Skip: &page.Page})
 	if err != nil {
 		return nil, err
 	}
@@ -44,14 +36,14 @@ func FindAll(page Page, nameEq string) ([]Burger, error) {
 	return burgers, nil
 }
 
-func FindOne(id string) (*Burger, error) {
+func (r MongoRepository) FindOne(id string) (*Burger, error) {
 	var result Burger
 
 	objId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	err = burgerCol().FindOne(ctxBG, bson.M{"_id": objId}).Decode(&result)
+	err = r.collection.FindOne(ctxBG, bson.M{"_id": objId}).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +51,8 @@ func FindOne(id string) (*Burger, error) {
 	return &result, nil
 }
 
-func FindRandom() (*Burger, error) {
-	cursor, err := burgerCol().Aggregate(ctxBG, bson.A{bson.M{"$sample": bson.M{"size": 1}}})
+func (r MongoRepository) FindRandom() (*Burger, error) {
+	cursor, err := r.collection.Aggregate(ctxBG, bson.A{bson.M{"$sample": bson.M{"size": 1}}})
 	if err != nil {
 		return nil, err
 	}
@@ -74,14 +66,19 @@ func FindRandom() (*Burger, error) {
 	return &burgers[0], nil
 }
 
-func InsertOne(burger *Burger) (*mongo.InsertOneResult, error) {
+func (r MongoRepository) Save(burger *Burger) (*Burger, error) {
 	err := validateBurger(burger)
 	if err != nil {
 		return nil, err
 	}
 	burger.ID = primitive.NewObjectID()
-	insrBurger, err := burgerCol().InsertOne(ctxBG, &burger)
-	return insrBurger, err
+	insrtResult, err := r.collection.InsertOne(ctxBG, &burger)
+	if err != nil {
+		return nil, err
+	}
+	oid := insrtResult.InsertedID.(primitive.ObjectID).Hex()
+
+	return r.FindOne(oid)
 }
 
 func validateBurger(burger *Burger) error {

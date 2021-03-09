@@ -4,6 +4,7 @@ import (
 	"burger-api/internal/config"
 	"burger-api/internal/db"
 	"burger-api/internal/db/migration"
+	"burger-api/internal/model/burger"
 	"burger-api/internal/routes"
 	"net/http"
 	"time"
@@ -22,8 +23,11 @@ func main() {
 	run(*cfg, cfgFlags)
 }
 
+// Acts as a dependency management function
 func run(cfg config.Config, flags config.Flags) {
 	db.InitDb(cfg)
+	burger.InitRepository(burger.NewMongoRepository(db.DB))
+
 	if flags.Migrate {
 		migration.CreateCollections()
 	}
